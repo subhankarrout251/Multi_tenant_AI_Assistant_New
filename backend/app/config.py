@@ -99,3 +99,11 @@ GROQ_API_KEY: str      = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL: str        = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 LLM_TEMPERATURE: float = 0.2
 LLM_MAX_RETRIES: int   = 1   # retry once on rate limit / transient failure
+
+# ── Chunking (shared between manual scripts and onboarding pipeline) ─
+CHUNK_SIZE:    int = 450
+CHUNK_OVERLAP: int = 80
+
+# ── Onboarding automation ─────────────────────────────────────────────
+ONBOARD_MAX_PAGES: int = int(os.getenv("ONBOARD_MAX_PAGES", "40"))
+ADMIN_API_KEY:      str = os.getenv("ADMIN_API_KEY", "")

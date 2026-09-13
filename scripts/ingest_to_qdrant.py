@@ -17,6 +17,7 @@ import json
 import uuid
 import sys
 from tqdm import tqdm
+from dotenv import load_dotenv
 
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
@@ -26,10 +27,13 @@ from qdrant_client.models import (
     PayloadSchemaType,
 )
 
+load_dotenv(os.path.join("backend", ".env"))
+
 # ── Config ────────────────────────────────────────────────────────────
 WEBSITE_ID       = "crushaders_tech"
 CHUNKS_FILE      = os.path.join("data", WEBSITE_ID, "processed", "chunks.json")
 QDRANT_URL       = os.getenv("QDRANT_URL", "http://localhost:6333")
+QDRANT_API_KEY   = os.getenv("QDRANT_API_KEY", "")
 COLLECTION_NAME  = "all_websites"
 EMBEDDING_MODEL  = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIM    = 384
@@ -112,7 +116,12 @@ def main():
 
     # ── Connect to Qdrant ─────────────────────────────────────────────
     print(f"\n  Connecting to Qdrant at {QDRANT_URL}...")
-    client = QdrantClient(url=QDRANT_URL, timeout=30)
+
+    client = QdrantClient(
+    url=QDRANT_URL,
+    api_key=QDRANT_API_KEY if QDRANT_API_KEY else None,
+    timeout=30,
+)
 
     # Quick health check
     try:
@@ -188,8 +197,7 @@ def main():
     print(f"  Ingestion complete!")
     print(f"  Total points ingested: {total_ingested}")
     print(f"  Collection: {COLLECTION_NAME}")
-    print(f"  Verify at:  http://localhost:6333/dashboard")
-    print(f"{'='*60}\n")
+    print(f"  Verify at: {QDRANT_URL}/dashboard")
 
     # ── Quick verification ────────────────────────────────────────────
     count = client.count(

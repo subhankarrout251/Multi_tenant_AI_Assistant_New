@@ -32,7 +32,7 @@ def get_qdrant_client() -> QdrantClient:
         logger.info("Initializing Qdrant client at %s", QDRANT_URL)
         _client = QdrantClient(
             url     = QDRANT_URL,
-            api_key = QDRANT_API_KEY,
+            api_key = QDRANT_API_KEY if QDRANT_API_KEY else None,
             timeout = 30,
         )
         logger.info("Qdrant client initialized")

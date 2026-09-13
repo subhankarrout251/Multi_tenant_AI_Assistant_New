@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import chat
 from app.config import APP_ENV, ALLOWED_ORIGINS
+from app.routers import chat, admin
 
 logging.basicConfig(
     level   = logging.INFO,
@@ -64,3 +65,6 @@ app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 @app.get("/health", tags=["system"])
 def health():
     return {"status": "ok", "phase": "2-rag", "env": APP_ENV}
+
+app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
+app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
