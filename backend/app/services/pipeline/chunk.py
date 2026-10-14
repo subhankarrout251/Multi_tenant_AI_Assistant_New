@@ -58,12 +58,15 @@ def chunk_pages(website_id: str, pages: list[dict]) -> list[dict]:
             if len(chunk_text) < 60:
                 continue
 
+            page_title = page.get("page_title") or page.get("page_type", "document").replace("_", " ").title()
+            doc_type   = page.get("doc_type", "website_public")
+
             all_chunks.append({
                 "website_id":  website_id,
                 "url":         page["url"],
-                "page_title":  page["page_type"].replace("_", " ").title(),
-                "page_type":   page["page_type"],
-                "doc_type":    "website_public",
+                "page_title":  page_title,
+                "page_type":   page.get("page_type", "document"),
+                "doc_type":    doc_type,
                 "chunk_text":  chunk_text,
                 "chunk_index": i,
                 "char_count":  len(chunk_text),

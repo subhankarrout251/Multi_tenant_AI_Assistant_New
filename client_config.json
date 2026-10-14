@@ -1,0 +1,11 @@
+{
+  "website_id": "grand_hotel",
+  "display_name": "Grand Palace Hotel & Resort",
+  "website_url": "https://grandpalaceresort.com",
+  "contact": {
+    "phone": "+91 7077479235",
+    "email": "reservations@grandpalaceresort.com",
+    "address": "Marine Drive, Puri – 752001, Odisha"
+  },
+  "docs_dir": "data/grand_hotel/docs"
+}

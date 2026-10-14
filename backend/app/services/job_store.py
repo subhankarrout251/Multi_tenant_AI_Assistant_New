@@ -17,8 +17,10 @@ import uuid
 import threading
 from datetime import datetime, timezone
 
+from app.config import BASE_DIR
+
 _LOCK = threading.Lock()
-_JOBS_FILE = os.path.join("..", "data", "onboarding_jobs.json")
+_JOBS_FILE = os.path.join(BASE_DIR, "data", "onboarding_jobs.json")
 
 
 def _load() -> dict:

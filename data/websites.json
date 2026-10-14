@@ -4,7 +4,26 @@
       "website_id": "crushaders_tech",
       "display_name": "Crushaders Tech Solutions",
       "active": true,
-      "onboarded_at": "2026-06-28"
+      "onboarded_at": "2026-10-11",
+      "base_url": "https://crushaderstech.com",
+      "contact": {
+        "phone": "+91 99999 88888",
+        "email": "contact@crushaderstech.com",
+        "address": "Tech Hub, Bhubaneswar, Odisha"
+      }
+    },
+    {
+      "website_id": "sunrise_eco_homes",
+      "display_name": "Sunrise Eco Homes",
+      "base_url": "https://sunrise-eco-homes.vercel.app",
+      "active": true,
+      "onboarded_at": "2026-10-12",
+      "contact": {
+        "phone": "+91 8249724355",
+        "email": "sunriseecohome@gmail.com",
+        "address": "Daringbadi, Pole, Kandhamal, PIN: 762104, Odisha, India"
+      }
     }
-  ]
+  ],
+  "active_id": "sunrise_eco_homes"
 }

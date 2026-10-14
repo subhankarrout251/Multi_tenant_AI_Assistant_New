@@ -31,3 +31,23 @@ class ChatResponse(BaseModel):
             }
         }
     }
+
+
+class ClearHistoryRequest(BaseModel):
+    session_id: str = Field(..., min_length=1, description="Session ID to clear history for")
+
+
+class ClearHistoryResponse(BaseModel):
+    status:     str = Field(..., example="cleared")
+    session_id: str = Field(..., example="sess-1750000000000")
+
+
+class ChatMessageItem(BaseModel):
+    role:      str   = Field(..., description="'user' or 'assistant'")
+    content:   str   = Field(..., description="Message text")
+    timestamp: float = Field(..., description="UNIX timestamp")
+
+
+class ChatHistoryResponse(BaseModel):
+    session_id: str                   = Field(..., description="The session identifier")
+    messages:   List[ChatMessageItem] = Field(default_factory=list, description="Ordered conversation messages")

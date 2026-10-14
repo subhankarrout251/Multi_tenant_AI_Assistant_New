@@ -1,0 +1,76 @@
+{
+  "test-multi-turn-eval-1": {
+    "session_id": "test-multi-turn-eval-1",
+    "website_id": "sunrise_eco_homes",
+    "created_at": "2026-10-13T20:17:49.084682+00:00",
+    "updated_at": "2026-10-13T20:17:50.606740+00:00",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello! My name is Subhankar and I want to book a room.",
+        "timestamp": 1791922669.084526
+      },
+      {
+        "role": "assistant",
+        "content": "I don’t have the booking details here. Please contact our team at sunriseecohome@gmail.com or call +91 8249724355 — they’ll be happy to help you reserve a room.",
+        "timestamp": 1791922669.084843
+      },
+      {
+        "role": "user",
+        "content": "What is my name?",
+        "timestamp": 1791922670.606724
+      },
+      {
+        "role": "assistant",
+        "content": "Your name is Subhankar.",
+        "timestamp": 1791922670.6068249
+      }
+    ]
+  },
+  "test-multi-turn-eval-2": {
+    "session_id": "test-multi-turn-eval-2",
+    "website_id": "sunrise_eco_homes",
+    "created_at": "2026-10-13T20:19:21.000088+00:00",
+    "updated_at": "2026-10-13T20:19:22.520755+00:00",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What payment methods do you accept at Sunrise Eco Homes?",
+        "timestamp": 1791922761.000073
+      },
+      {
+        "role": "assistant",
+        "content": "**Payment methods accepted at Sunrise Eco Homes**\n\n- UPI (use ID: 8763922836@okbizaxis)  \n- Cash  \n- Credit / Debit cards  \n- Bank transfer  \n\nIf you need further assistance, feel free to contact us at:\n\n- Phone: +91 8249724355  \n- Email: sunriseecohome@gmail.com  \n- Website: https://sunrise-eco-homes.vercel.app",
+        "timestamp": 1791922761.000142
+      },
+      {
+        "role": "user",
+        "content": "Can you list the payment methods you just mentioned along with my name Subhankar?",
+        "timestamp": 1791922762.52074
+      },
+      {
+        "role": "assistant",
+        "content": "**Payment methods accepted at Sunrise Eco Homes (for Subhankar):**\n\n1. UPI – 8763922836@okbizaxis  \n2. Cash  \n3. Credit / Debit cards  \n4. Bank transfer  \n\nIf you have any further questions, feel free to reach out!",
+        "timestamp": 1791922762.520821
+      }
+    ]
+  },
+  "verify-session-1791923064": {
+    "session_id": "verify-session-1791923064",
+    "website_id": "sunrise_eco_homes",
+    "created_at": "2026-10-13T20:24:35.208509+00:00",
+    "updated_at": "2026-10-13T20:24:35.208509+00:00",
+    "messages": [
+      {
+        "role": "user",
+        "content": "What is my name?",
+        "timestamp": 1791923075.208508
+      },
+      {
+        "role": "assistant",
+        "content": "I don’t have that specific information here. Please contact our team at sunriseecohome@gmail.com or call +91 8249724355 — they’ll be happy to help.",
+        "timestamp": 1791923075.2085602
+      }
+    ]
+  }
+}

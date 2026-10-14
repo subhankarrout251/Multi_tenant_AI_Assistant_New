@@ -3,22 +3,19 @@ app/vectorstore/qdrant_client.py
 ──────────────────────────────────────────────────────────────────────
 Provides a shared, lazily-initialized Qdrant client instance.
 
-Why "lazy initialization"?
-When FastAPI starts, we don't connect to Qdrant immediately.
-We connect on the first actual use. This way, if Qdrant is
-temporarily unavailable at startup, FastAPI still starts and
-can return health checks — rather than crashing on boot.
+Attempts to connect to remote Qdrant (via QDRANT_URL, e.g. Docker or Cloud).
+If remote Qdrant is unreachable or not running, seamlessly falls back to
+local embedded persistent Qdrant storage at data/qdrant_storage.
 
-Why a shared instance?
-Creating a new Qdrant connection for every user request would be
-slow (connection handshake overhead) and resource-wasteful (each
-connection consumes memory). One shared client handles all requests.
+This prevents '[Errno 61] Connection refused' crashes when Docker or
+an external Qdrant service is not running locally.
 ──────────────────────────────────────────────────────────────────────
 """
 
+import os
 import logging
 from qdrant_client import QdrantClient
-from app.config import QDRANT_URL, QDRANT_API_KEY
+from app.config import QDRANT_URL, QDRANT_API_KEY, BASE_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +26,29 @@ def get_qdrant_client() -> QdrantClient:
     global _client
 
     if _client is None:
-        logger.info("Initializing Qdrant client at %s", QDRANT_URL)
-        _client = QdrantClient(
-            url     = QDRANT_URL,
-            api_key = QDRANT_API_KEY if QDRANT_API_KEY else None,
-            timeout = 30,
-        )
-        logger.info("Qdrant client initialized")
+        client_connected = False
+        if QDRANT_URL:
+            try:
+                candidate = QdrantClient(
+                    url     = QDRANT_URL,
+                    api_key = QDRANT_API_KEY if QDRANT_API_KEY else None,
+                    timeout = 3,
+                )
+                # Verify server is responding
+                candidate.get_collections()
+                _client = candidate
+                client_connected = True
+                logger.info("Connected to remote Qdrant server at %s", QDRANT_URL)
+            except Exception as e:
+                logger.warning(
+                    "Remote Qdrant at %s unreachable (%s). Using local embedded Qdrant database.",
+                    QDRANT_URL, e
+                )
+
+        if not client_connected:
+            storage_path = os.path.join(BASE_DIR, "data", "qdrant_storage")
+            os.makedirs(storage_path, exist_ok=True)
+            _client = QdrantClient(path=storage_path)
+            logger.info("Initialized local persistent Qdrant database at '%s'", storage_path)
 
     return _client

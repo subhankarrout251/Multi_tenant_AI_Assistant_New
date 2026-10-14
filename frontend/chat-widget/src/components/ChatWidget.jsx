@@ -1,18 +1,32 @@
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "../hooks/useChat";
+import { fetchClientInfo } from "../api/chatApi";
 import { ChatBubble } from "./ChatBubble";
 import { ChatInput } from "./ChatInput";
 import { TypingIndicator } from "./TypingIndicator";
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const { messages, sendUserMessage, isLoading, error } = useChat();
+  const [clientInfo, setClientInfo] = useState(null);
+  const { messages, sendUserMessage, isLoading, error, clearChat } = useChat(clientInfo);
+  const [clearedNotice, setClearedNotice] = useState(false);
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    fetchClientInfo().then((info) => setClientInfo(info));
+  }, []);
 
   // Auto-scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
+
+  const handleClearChat = async () => {
+    if (isLoading) return;
+    await clearChat();
+    setClearedNotice(true);
+    setTimeout(() => setClearedNotice(false), 2500);
+  };
 
   return (
     <>
@@ -59,7 +73,7 @@ export function ChatWidget() {
             fontFamily: "system-ui, sans-serif",
           }}
           role="dialog"
-          aria-label="Crushaders Tech chat assistant"
+          aria-label={clientInfo?.display_name ? `${clientInfo.display_name} chat assistant` : "AI Chat Assistant"}
         >
           {/* Header */}
           <div
@@ -68,26 +82,83 @@ export function ChatWidget() {
               padding: "14px 16px",
               display: "flex",
               alignItems: "center",
+              justifyContent: "space-between",
               gap: 10,
             }}
           >
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "#4ade80",
-              }}
-            />
-            <div>
-              <div style={{ color: "#fff", fontWeight: 500, fontSize: 14 }}>
-                Crushaders Tech Assistant
-              </div>
-              <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11 }}>
-                Typically replies instantly
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#4ade80",
+                  flexShrink: 0,
+                }}
+              />
+              <div style={{ overflow: "hidden" }}>
+                <div
+                  style={{
+                    color: "#fff",
+                    fontWeight: 500,
+                    fontSize: 14,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {clientInfo?.display_name ? `${clientInfo.display_name} Assistant` : "Crushaders Tech Assistant"}
+                </div>
+                <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11 }}>
+                  Typically replies instantly
+                </div>
               </div>
             </div>
+
+            {/* Clear conversation / New chat button */}
+            <button
+              onClick={handleClearChat}
+              title="Start a new chat (clear memory)"
+              aria-label="Start new chat"
+              disabled={isLoading}
+              style={{
+                background: "rgba(255,255,255,0.12)",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 8px",
+                color: "rgba(255,255,255,0.9)",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                fontSize: 12,
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                transition: "background 0.2s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.22)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
+            >
+              <span style={{ fontSize: 13 }}>↺</span>
+              <span style={{ fontSize: 11, fontWeight: 500 }}>New</span>
+            </button>
           </div>
+
+          {/* Cleared notification banner */}
+          {clearedNotice && (
+            <div
+              style={{
+                background: "#f0fdf4",
+                color: "#166534",
+                fontSize: 12,
+                padding: "6px 14px",
+                borderBottom: "1px solid #bbf7d0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span>✓ Conversation memory cleared. Fresh chat started.</span>
+            </div>
+          )}
 
           {/* Error banner */}
           {error && (

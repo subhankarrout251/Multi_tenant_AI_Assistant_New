@@ -55,16 +55,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins     = ALLOWED_ORIGINS,
     allow_credentials = True,
-    allow_methods     = ["POST", "GET", "OPTIONS"],
-    allow_headers     = ["Content-Type"],
+    allow_methods     = ["POST", "GET", "OPTIONS", "DELETE"],
+    allow_headers     = ["Content-Type", "Authorization", "X-Admin-Key"],
 )
 
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
+app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 
 
 @app.get("/health", tags=["system"])
 def health():
     return {"status": "ok", "phase": "2-rag", "env": APP_ENV}
-
-app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
-app.include_router(admin.router, prefix="/api/v1", tags=["admin"])

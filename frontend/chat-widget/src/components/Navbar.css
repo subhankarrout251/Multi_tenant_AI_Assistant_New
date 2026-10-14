@@ -1,0 +1,126 @@
+.site-navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  font-family: 'Barlow', sans-serif;
+}
+
+.navbar-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.navbar-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  border-radius: 8px;
+}
+
+.brand-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.brand-badge {
+  font-size: 11px;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-item {
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-item:hover {
+  color: #1e293b;
+  background: #f8fafc;
+}
+
+.nav-item.active {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.nav-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.nav-active-label {
+  color: #15803d;
+  font-weight: 500;
+}
+
+.nav-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 8px;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: navPulse 1.8s infinite;
+}
+
+@keyframes navPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+@media (max-width: 720px) {
+  .navbar-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -9,17 +9,21 @@ logger = logging.getLogger(__name__)
 # ── App ───────────────────────────────────────────────────────────────
 APP_ENV: str = os.getenv("APP_ENV", "development")
 
-ALLOWED_ORIGINS: list[str] = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000"
-).split(",")
+ALLOWED_ORIGINS: list[str] = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5173,http://localhost:3000"
+    ).split(",")
+    if origin.strip()
+]
 
 # ── Dynamic website registry ──────────────────────────────────────────
-# Path is relative to project root, not backend/ — adjust if your
-# structure differs
+# Base directory of the repository
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 WEBSITES_CONFIG_PATH = os.getenv(
     "WEBSITES_CONFIG_PATH",
-    os.path.join("..", "data", "websites.json")
+    os.path.join(BASE_DIR, "data", "websites.json")
 )
 
 
@@ -65,6 +69,52 @@ def load_allowed_website_ids() -> list[str]:
         return ["crushaders_tech"]
 
 
+def get_active_website_info(website_id: str = None) -> dict:
+    """Retrieve metadata (display_name, base_url, contact) for website_id or the default active site."""
+    default_fallback = {
+        "website_id": "crushaders_tech",
+        "display_name": "Crushaders Tech Solutions",
+        "base_url": "https://crushaderstech.com",
+        "active": True,
+        "contact": {
+            "email": "sales@crushaderstech.com",
+            "phone": "+91 7077479235",
+            "address": "GPS Tower, Patia, Bhubaneswar – 751031, Odisha",
+        }
+    }
+    try:
+        with open(WEBSITES_CONFIG_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        sites = data.get("websites", [])
+        if not sites:
+            return default_fallback
+
+        target_id = website_id or data.get("active_id")
+
+        if target_id:
+            for site in sites:
+                if site.get("website_id") == target_id:
+                    res = dict(site)
+                    if "contact" not in res or not res["contact"]:
+                        res["contact"] = default_fallback["contact"]
+                    return res
+
+        for site in sites:
+            if site.get("active", False):
+                res = dict(site)
+                if "contact" not in res or not res["contact"]:
+                    res["contact"] = default_fallback["contact"]
+                return res
+
+        return sites[0]
+    except Exception:
+        return default_fallback
+
+
+def get_website_info(website_id: str) -> dict:
+    return get_active_website_info(website_id)
+
+
 # Loaded once at import time (module load = app startup)
 ALLOWED_WEBSITE_IDS: list[str] = load_allowed_website_ids()
 
@@ -106,4 +156,4 @@ CHUNK_OVERLAP: int = 80
 
 # ── Onboarding automation ─────────────────────────────────────────────
 ONBOARD_MAX_PAGES: int = int(os.getenv("ONBOARD_MAX_PAGES", "40"))
-ADMIN_API_KEY:      str = os.getenv("ADMIN_API_KEY", "")
+ADMIN_API_KEY:      str = os.getenv("ADMIN_API_KEY", "").strip()

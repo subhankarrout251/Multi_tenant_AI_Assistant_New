@@ -1,0 +1,50 @@
+{
+  "a9eff8b2-4661-4201-926d-a3f79a2a3852": {
+    "job_id": "a9eff8b2-4661-4201-926d-a3f79a2a3852",
+    "website_id": "sunrise_eco_homes",
+    "status": "failed",
+    "pages_discovered": 2,
+    "pages_scraped": 2,
+    "chunks_created": 10,
+    "points_ingested": 0,
+    "error": "[Errno 61] Connection refused",
+    "created_at": "2026-10-11T19:29:13.722982+00:00",
+    "updated_at": "2026-10-11T19:29:15.064189+00:00"
+  },
+  "5ca08d4a-4575-472c-8ee5-0336f777cbe9": {
+    "job_id": "5ca08d4a-4575-472c-8ee5-0336f777cbe9",
+    "website_id": "sunrise_eco_homes",
+    "status": "failed",
+    "pages_discovered": 2,
+    "pages_scraped": 2,
+    "chunks_created": 10,
+    "points_ingested": 0,
+    "error": "[Errno 61] Connection refused",
+    "created_at": "2026-10-11T19:31:15.005594+00:00",
+    "updated_at": "2026-10-11T19:31:15.060917+00:00"
+  },
+  "76f84631-925d-455c-9b62-b56b286faf9a": {
+    "job_id": "76f84631-925d-455c-9b62-b56b286faf9a",
+    "website_id": "sunrise_eco_homes",
+    "status": "completed",
+    "pages_discovered": 2,
+    "pages_scraped": 2,
+    "chunks_created": 10,
+    "points_ingested": 10,
+    "error": null,
+    "created_at": "2026-10-11T19:35:26.479784+00:00",
+    "updated_at": "2026-10-11T19:35:28.498058+00:00"
+  },
+  "743b5027-669b-4360-8082-46fa76b3f1ab": {
+    "job_id": "743b5027-669b-4360-8082-46fa76b3f1ab",
+    "website_id": "sunrise_eco_homes",
+    "status": "completed",
+    "pages_discovered": 2,
+    "pages_scraped": 2,
+    "chunks_created": 10,
+    "points_ingested": 10,
+    "error": null,
+    "created_at": "2026-10-11T19:37:00.309670+00:00",
+    "updated_at": "2026-10-11T19:37:01.231675+00:00"
+  }
+}

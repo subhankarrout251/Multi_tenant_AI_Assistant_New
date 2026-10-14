@@ -37,14 +37,17 @@ def _ensure_collection(client) -> None:
         collection_name=QDRANT_COLLECTION,
         vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
     )
-    client.create_payload_index(
-        collection_name=QDRANT_COLLECTION, field_name="website_id",
-        field_schema=PayloadSchemaType.KEYWORD
-    )
-    client.create_payload_index(
-        collection_name=QDRANT_COLLECTION, field_name="page_type",
-        field_schema=PayloadSchemaType.KEYWORD
-    )
+    try:
+        client.create_payload_index(
+            collection_name=QDRANT_COLLECTION, field_name="website_id",
+            field_schema=PayloadSchemaType.KEYWORD
+        )
+        client.create_payload_index(
+            collection_name=QDRANT_COLLECTION, field_name="page_type",
+            field_schema=PayloadSchemaType.KEYWORD
+        )
+    except Exception as e:
+        logger.debug("Payload index creation note: %s", e)
 
 
 def ingest_chunks(chunks: list[dict]) -> int:
