@@ -1,26 +1,38 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
-const ADMIN_KEY = import.meta.env.VITE_ADMIN_API_KEY ?? "";
 
-function getAdminHeaders(extraHeaders = {}) {
-  const headers = { ...extraHeaders };
-  if (ADMIN_KEY) {
-    headers["X-Admin-Key"] = ADMIN_KEY;
-  }
-  return headers;
+function adminFetch(path, options = {}) {
+  return fetch(`${BASE_URL}${path}`, {
+    credentials: "include",
+    ...options,
+  });
+}
+
+export async function loginAdmin(apiKey) {
+  const res = await adminFetch("/api/v1/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ api_key: apiKey }),
+  });
+  if (!res.ok) throw new Error("Invalid admin credentials");
+  return res.json();
+}
+
+export async function fetchAdminSession() {
+  const res = await adminFetch("/api/v1/admin/session");
+  if (!res.ok) return { authenticated: false };
+  return res.json();
 }
 
 export async function fetchWebsites() {
-  const res = await fetch(`${BASE_URL}/api/v1/admin/websites`, {
-    headers: getAdminHeaders(),
-  });
+  const res = await adminFetch("/api/v1/admin/websites");
   if (!res.ok) throw new Error("Failed to fetch websites list");
   return res.json();
 }
 
 export async function setActiveWebsite(websiteId) {
-  const res = await fetch(`${BASE_URL}/api/v1/admin/websites/active`, {
+  const res = await adminFetch("/api/v1/admin/websites/active", {
     method: "POST",
-    headers: getAdminHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ website_id: websiteId }),
   });
   if (!res.ok) throw new Error("Failed to update active website");
@@ -28,9 +40,8 @@ export async function setActiveWebsite(websiteId) {
 }
 
 export async function submitSetupClient(formData) {
-  const res = await fetch(`${BASE_URL}/api/v1/admin/setup`, {
+  const res = await adminFetch("/api/v1/admin/setup", {
     method: "POST",
-    headers: getAdminHeaders(), // Browser sets multipart boundary automatically
     body: formData,
   });
   if (!res.ok) {
@@ -41,9 +52,9 @@ export async function submitSetupClient(formData) {
 }
 
 export async function updateCompanyProfile(websiteId, profileData) {
-  const res = await fetch(`${BASE_URL}/api/v1/admin/websites/${websiteId}`, {
+  const res = await adminFetch(`/api/v1/admin/websites/${websiteId}`, {
     method: "PUT",
-    headers: getAdminHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(profileData),
   });
   if (!res.ok) {
@@ -54,17 +65,14 @@ export async function updateCompanyProfile(websiteId, profileData) {
 }
 
 export async function fetchCompanyDocs(websiteId) {
-  const res = await fetch(`${BASE_URL}/api/v1/admin/websites/${websiteId}/docs`, {
-    headers: getAdminHeaders(),
-  });
+  const res = await adminFetch(`/api/v1/admin/websites/${websiteId}/docs`);
   if (!res.ok) throw new Error("Failed to fetch documents");
   return res.json(); // { website_id, documents: [{ filename, size_bytes, modified_at, doc_type }] }
 }
 
 export async function deleteCompanyDoc(websiteId, filename) {
-  const res = await fetch(`${BASE_URL}/api/v1/admin/websites/${websiteId}/docs/${encodeURIComponent(filename)}`, {
+  const res = await adminFetch(`/api/v1/admin/websites/${websiteId}/docs/${encodeURIComponent(filename)}`, {
     method: "DELETE",
-    headers: getAdminHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
@@ -74,9 +82,7 @@ export async function deleteCompanyDoc(websiteId, filename) {
 }
 
 export async function fetchJobStatus(jobId) {
-  const res = await fetch(`${BASE_URL}/api/v1/admin/onboard/${jobId}`, {
-    headers: getAdminHeaders(),
-  });
+  const res = await adminFetch(`/api/v1/admin/onboard/${jobId}`);
   if (!res.ok) throw new Error("Failed to fetch job status");
   return res.json();
 }
@@ -86,9 +92,8 @@ export async function triggerGenerateFinetune(websiteId, maxChunks = 40) {
   form.append("website_id", websiteId);
   form.append("max_chunks", maxChunks.toString());
 
-  const res = await fetch(`${BASE_URL}/api/v1/admin/finetune/generate`, {
+  const res = await adminFetch("/api/v1/admin/finetune/generate", {
     method: "POST",
-    headers: getAdminHeaders(),
     body: form,
   });
   if (!res.ok) {
@@ -103,9 +108,8 @@ export async function uploadFinetuneDataset(websiteId, file) {
   form.append("website_id", websiteId);
   form.append("file", file);
 
-  const res = await fetch(`${BASE_URL}/api/v1/admin/finetune/upload`, {
+  const res = await adminFetch("/api/v1/admin/finetune/upload", {
     method: "POST",
-    headers: getAdminHeaders(),
     body: form,
   });
   if (!res.ok) {
@@ -116,5 +120,5 @@ export async function uploadFinetuneDataset(websiteId, file) {
 }
 
 export function getFinetuneDownloadUrl(websiteId) {
-  return `${BASE_URL}/api/v1/admin/finetune/${websiteId}?x_admin_key=${encodeURIComponent(ADMIN_KEY)}`;
+  return `${BASE_URL}/api/v1/admin/finetune/${websiteId}`;
 }

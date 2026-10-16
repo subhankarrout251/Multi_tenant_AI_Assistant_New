@@ -46,5 +46,29 @@
     "error": null,
     "created_at": "2026-10-11T19:37:00.309670+00:00",
     "updated_at": "2026-10-11T19:37:01.231675+00:00"
+  },
+  "0081a2d6-1bf0-49e0-9a45-a3fbc50cbbe2": {
+    "job_id": "0081a2d6-1bf0-49e0-9a45-a3fbc50cbbe2",
+    "website_id": "sunrise_eco_homes",
+    "status": "completed",
+    "pages_discovered": 2,
+    "pages_scraped": 2,
+    "chunks_created": 10,
+    "points_ingested": 10,
+    "error": null,
+    "created_at": "2026-10-16T19:36:22.022838+00:00",
+    "updated_at": "2026-10-16T19:36:25.045382+00:00"
+  },
+  "401fdb92-502b-4de6-b4e2-216ec21a58b6": {
+    "job_id": "401fdb92-502b-4de6-b4e2-216ec21a58b6",
+    "website_id": "crushaders_tech",
+    "status": "completed",
+    "pages_discovered": 0,
+    "pages_scraped": 0,
+    "chunks_created": 0,
+    "points_ingested": 0,
+    "error": null,
+    "created_at": "2026-10-16T21:15:44.167117+00:00",
+    "updated_at": "2026-10-16T21:15:47.829963+00:00"
   }
 }

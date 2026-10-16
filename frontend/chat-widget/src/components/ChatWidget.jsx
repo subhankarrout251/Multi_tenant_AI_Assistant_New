@@ -4,6 +4,7 @@ import { fetchClientInfo } from "../api/chatApi";
 import { ChatBubble } from "./ChatBubble";
 import { ChatInput } from "./ChatInput";
 import { TypingIndicator } from "./TypingIndicator";
+import AnimatedRobot3D from "./AnimatedRobot3D";
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,27 +31,44 @@ export function ChatWidget() {
 
   return (
     <>
-      {/* Floating toggle button */}
+      {/* Floating toggle button with 3D animated robot */}
       <button
         onClick={() => setIsOpen((o) => !o)}
         aria-label={isOpen ? "Close chat" : "Open chat"}
+        title={isOpen ? "Close assistant" : "Chat with assistant"}
         style={{
           position: "fixed",
-          bottom: 24,
-          right: 24,
-          width: 52,
-          height: 52,
-          borderRadius: "50%",
-          background: "#1A3C5E",
+          bottom: isOpen ? 24 : 16,
+          right: isOpen ? 24 : 16,
+          width: isOpen ? 52 : "auto",
+          height: isOpen ? 52 : "auto",
+          borderRadius: isOpen ? "50%" : 0,
+          background: isOpen ? "#1A3C5E" : "transparent",
           border: "none",
+          outline: "none",
           cursor: "pointer",
           color: "#fff",
-          fontSize: 22,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+          boxShadow: isOpen ? "0 8px 24px rgba(26, 60, 94, 0.4), 0 2px 6px rgba(0,0,0,0.15)" : "none",
           zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
+          overflow: "visible",
+          transition: "transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.1)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "scale(1)";
         }}
       >
-        {isOpen ? "✕" : "💬"}
+        {isOpen ? (
+          <span style={{ fontSize: 24, fontWeight: "bold", lineHeight: 1 }}>✕</span>
+        ) : (
+          <AnimatedRobot3D size={74} showShadow={false} interactive={true} />
+        )}
       </button>
 
       {/* Chat panel */}
@@ -89,13 +107,30 @@ export function ChatWidget() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
               <div
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: "#4ade80",
+                  width: 34,
+                  height: 34,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   flexShrink: 0,
+                  position: "relative",
+                  background: "transparent",
                 }}
-              />
+              >
+                <AnimatedRobot3D size={28} showShadow={false} interactive={false} />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: -1,
+                    right: -1,
+                    width: 9,
+                    height: 9,
+                    borderRadius: "50%",
+                    background: "#4ade80",
+                    border: "2px solid #1A3C5E",
+                  }}
+                />
+              </div>
               <div style={{ overflow: "hidden" }}>
                 <div
                   style={{
@@ -115,7 +150,7 @@ export function ChatWidget() {
               </div>
             </div>
 
-            {/* Clear conversation / New chat button */}
+            {/* Header Action Button: Refresh / New Chat */}
             <button
               onClick={handleClearChat}
               title="Start a new chat (clear memory)"
@@ -125,20 +160,27 @@ export function ChatWidget() {
                 background: "rgba(255,255,255,0.12)",
                 border: "none",
                 borderRadius: 8,
-                padding: "6px 8px",
+                width: 28,
+                height: 28,
                 color: "rgba(255,255,255,0.9)",
                 cursor: isLoading ? "not-allowed" : "pointer",
-                fontSize: 12,
+                fontSize: 15,
                 display: "flex",
                 alignItems: "center",
-                gap: 4,
-                transition: "background 0.2s ease",
+                justifyContent: "center",
+                lineHeight: 1,
+                transition: "background 0.2s ease, transform 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.22)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.22)";
+                e.currentTarget.style.transform = "rotate(30deg)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+                e.currentTarget.style.transform = "rotate(0deg)";
+              }}
             >
-              <span style={{ fontSize: 13 }}>↺</span>
-              <span style={{ fontSize: 11, fontWeight: 500 }}>New</span>
+              ↺
             </button>
           </div>
 

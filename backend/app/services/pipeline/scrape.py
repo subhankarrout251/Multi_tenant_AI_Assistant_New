@@ -11,8 +11,9 @@ import time
 import logging
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
-from app.services.pipeline.discover import HEADERS
+from app.services.pipeline.discover import HEADERS, UnsafeURLError, _safe_get
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,8 @@ def scrape_pages(pages: list[dict], delay_seconds: float = 1.0) -> list[dict]:
     for page in pages:
         url = page["url"]
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=15)
+            # Revalidate every target and redirect immediately before fetching.
+            resp = _safe_get(url, urlparse(url).netloc)
             resp.raise_for_status()
             text = _clean_text(_extract_text(resp.text))
 
@@ -55,7 +57,7 @@ def scrape_pages(pages: list[dict], delay_seconds: float = 1.0) -> list[dict]:
             results.append({**page, "text": text})
             logger.info("Scraped %s (%d chars)", url, len(text))
 
-        except requests.RequestException as e:
+        except (requests.RequestException, UnsafeURLError) as e:
             logger.warning("Failed to scrape %s: %s", url, e)
 
         time.sleep(delay_seconds)  # be polite to the target server

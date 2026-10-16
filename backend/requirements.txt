@@ -4,6 +4,7 @@ uvicorn[standard]==0.32.1
 python-dotenv==1.0.1
 pydantic==2.10.3
 python-multipart==0.0.32
+itsdangerous==2.2.0
 
 # Document & PDF parsing
 pypdf==6.20.0

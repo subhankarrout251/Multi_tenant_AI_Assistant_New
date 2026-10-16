@@ -5,7 +5,7 @@ from typing import List
 class ChatRequest(BaseModel):
     message:    str = Field(..., min_length=1, max_length=2000)
     website_id: str = Field(..., description="Routes to correct knowledge collection")
-    session_id: str = Field(..., description="Tracks conversation across turns")
+    session_id: str = Field(..., min_length=16, max_length=256, description="Client session hint; ownership is enforced by the server session")
 
     model_config = {
         "json_schema_extra": {
@@ -22,6 +22,7 @@ class ChatResponse(BaseModel):
     reply:   str       = Field(..., description="Assistant response text")
     sources: List[str] = Field(default_factory=list,
                                description="Source URLs — empty in Phase 1, populated in Phase 2")
+    session_id: str = Field(..., description="Server-owned chat session identifier")
 
     model_config = {
         "json_schema_extra": {

@@ -37,6 +37,7 @@ export async function sendMessage(message, sessionId) {
 
   const response = await fetch(`${BASE_URL}/api/v1/chat`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message,
@@ -58,6 +59,7 @@ export async function clearChatHistory(sessionId) {
   try {
     const response = await fetch(`${BASE_URL}/api/v1/chat/clear`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId }),
     });

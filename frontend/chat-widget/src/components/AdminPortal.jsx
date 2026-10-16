@@ -9,6 +9,8 @@ import {
   triggerGenerateFinetune,
   uploadFinetuneDataset,
   getFinetuneDownloadUrl,
+  loginAdmin,
+  fetchAdminSession,
 } from "../api/adminApi";
 import { Link } from "react-router-dom";
 import {
@@ -33,10 +35,21 @@ import {
   MailIcon,
   LocationIcon,
   DownloadIcon,
+  KeyIcon,
+  ShieldKeyholeIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LockIcon,
+  ArrowRightIcon,
 } from "./Icons";
 import "./AdminPortal.css";
 
 export function AdminPortal({ onClientChanged }) {
+  const [adminAuthenticated, setAdminAuthenticated] = useState(null);
+  const [adminKey, setAdminKey] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authenticating, setAuthenticating] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("setup"); // setup | finetune | websites
   const [websitesData, setWebsitesData] = useState({ websites: [], active_id: "" });
   const [loading, setLoading] = useState(false);
@@ -96,8 +109,113 @@ export function AdminPortal({ onClientChanged }) {
   };
 
   useEffect(() => {
-    loadWebsites();
+    fetchAdminSession()
+      .then((session) => setAdminAuthenticated(Boolean(session.authenticated)))
+      .catch(() => setAdminAuthenticated(false));
   }, []);
+
+  useEffect(() => {
+    if (adminAuthenticated) loadWebsites();
+  }, [adminAuthenticated]);
+
+  const handleAdminLogin = async (event) => {
+    event.preventDefault();
+    setAuthenticating(true);
+    setAuthError("");
+    try {
+      await loginAdmin(adminKey);
+      setAdminKey("");
+      setAdminAuthenticated(true);
+    } catch (err) {
+      setAuthError(err.message || "Could not authenticate");
+    } finally {
+      setAuthenticating(false);
+    }
+  };
+
+  if (adminAuthenticated === null) {
+    return <div className="admin-container">Checking admin session…</div>;
+  }
+
+  if (!adminAuthenticated) {
+    return (
+      <div className="login-page-wrapper">
+        {/* Ambient decorative background elements matching the design */}
+        <div className="login-bg-decorations" aria-hidden="true">
+          <div className="login-blob-top-left" />
+          <div className="login-blob-bottom-right" />
+          <div className="login-circle-ring ring-1" />
+          <div className="login-circle-ring ring-2" />
+          <div className="login-dot-grid top-left" />
+          <div className="login-dot-grid bottom-right" />
+        </div>
+
+        <main className="login-card">
+          <div className="login-icon-badge">
+            <ShieldKeyholeIcon size={26} className="login-shield-icon" />
+          </div>
+
+          <h1 className="login-title">Admin sign in</h1>
+          <p className="login-subtitle">
+            Enter the server-configured secret key.<br />
+            It is sent once to create a secure HTTP-only session.
+          </p>
+
+          <form onSubmit={handleAdminLogin} className="login-form">
+            <div className="login-form-group">
+              <label className="login-label" htmlFor="secret-key">
+                Secret key
+              </label>
+              <div className="login-input-wrapper">
+                <span className="login-input-icon-left" aria-hidden="true">
+                  <KeyIcon size={18} />
+                </span>
+                <input
+                  id="secret-key"
+                  className="login-input"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your secret key"
+                  value={adminKey}
+                  onChange={(event) => setAdminKey(event.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="login-input-toggle-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide secret key" : "Show secret key"}
+                  title={showPassword ? "Hide secret key" : "Show secret key"}
+                >
+                  {showPassword ? <EyeIcon size={18} /> : <EyeOffIcon size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {authError && (
+              <div className="login-error-alert" role="alert">
+                {authError}
+              </div>
+            )}
+
+            <button
+              className="login-submit-btn"
+              type="submit"
+              disabled={authenticating}
+            >
+              <span>{authenticating ? "Signing in…" : "Sign in"}</span>
+              {!authenticating && <ArrowRightIcon size={16} />}
+            </button>
+          </form>
+
+          <div className="login-footer-badge">
+            <LockIcon size={14} />
+            <span>Secure admin authentication</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   // Fetch documents whenever selected company in update mode changes
   const loadExistingDocs = async (id) => {

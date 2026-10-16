@@ -1,0 +1,19 @@
+# Locked direct production dependencies. Regenerate with pip-tools in CI when
+# dependency versions change; install with: pip install -r requirements.lock
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-dotenv==1.0.1
+pydantic==2.10.3
+python-multipart==0.0.32
+itsdangerous==2.2.0
+pypdf==6.20.0
+python-docx==1.2.0
+requests==2.32.3
+beautifulsoup4==4.12.3
+lxml==5.3.0
+sentence-transformers==3.3.1
+qdrant-client==1.12.1
+langchain==0.3.14
+langchain-community==0.3.14
+langchain-groq==0.2.3
+groq==0.13.1

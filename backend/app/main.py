@@ -1,9 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import chat
-from app.config import APP_ENV, ALLOWED_ORIGINS
+from starlette.middleware.sessions import SessionMiddleware
+from app.config import APP_ENV, ALLOWED_ORIGINS, SESSION_SECRET
 from app.routers import chat, admin
 
 logging.basicConfig(
@@ -25,8 +26,12 @@ async def lifespan(app: FastAPI):
 
     # Pre-load embedding model into memory
     from app.services.rag_service import get_embedding_model
-    get_embedding_model()
-    logger.info("Embedding model pre-loaded")
+    try:
+        get_embedding_model()
+        logger.info("Embedding model pre-loaded")
+    except Exception as e:
+        logger.error("Embedding model preload failed: %s", e)
+        logger.warning("API will start, but RAG remains unavailable until the embedding model can load")
 
    # Verify Qdrant is reachable
     from app.vectorstore.qdrant_client import get_qdrant_client
@@ -55,8 +60,32 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins     = ALLOWED_ORIGINS,
     allow_credentials = True,
-    allow_methods     = ["POST", "GET", "OPTIONS", "DELETE"],
-    allow_headers     = ["Content-Type", "Authorization", "X-Admin-Key"],
+    allow_methods     = ["POST", "GET", "PUT", "OPTIONS", "DELETE"],
+    allow_headers     = ["*"],
+)
+
+
+@app.middleware("http")
+async def protect_admin_routes(request: Request, call_next):
+    """Admin APIs require a server-side, HTTP-only signed-session login."""
+    # Preflight OPTIONS requests must bypass session checks so CORS headers are returned
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    path = request.url.path
+    if path.startswith("/api/v1/admin") and path not in {"/api/v1/admin/login", "/api/v1/admin/session"}:
+        if not request.session.get("is_admin"):
+            return JSONResponse(status_code=401, content={"detail": "Admin authentication required"})
+    return await call_next(request)
+
+
+# This is registered after the route guard so request.session is available
+# inside the guard (Starlette applies the most recently added middleware first).
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SESSION_SECRET,
+    same_site="lax",
+    https_only=APP_ENV == "production",
 )
 
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])

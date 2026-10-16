@@ -17,7 +17,7 @@ export default function App() {
     <BrowserRouter>
       <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
         <Routes>
-          {/* First page (/): Nothing shown except the chatbot */}
+          {/* First page (/): Clean page, chatbot widget in bottom-right corner */}
           <Route path="/" element={<div style={{ minHeight: "100vh" }} />} />
 
           {/* /upload route: All forms, document upload, and update settings */}

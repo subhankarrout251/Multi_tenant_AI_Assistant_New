@@ -2,6 +2,10 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 
+class AdminLoginRequest(BaseModel):
+    api_key: str = Field(..., min_length=1, max_length=500)
+
+
 class OnboardRequest(BaseModel):
     website_id: str = Field(
         ..., pattern=r"^[a-z0-9_]+$",

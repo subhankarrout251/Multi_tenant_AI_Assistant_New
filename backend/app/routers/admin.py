@@ -1,10 +1,12 @@
 import os
+import json
 import logging
 import re
-from fastapi import APIRouter, HTTPException, Header, BackgroundTasks, Form, UploadFile, File, Query
+import secrets
+from fastapi import APIRouter, HTTPException, Header, BackgroundTasks, Form, UploadFile, File, Query, Request
 from fastapi.responses import FileResponse
 
-from app.models.admin_schemas import OnboardRequest, OnboardAcceptedResponse, OnboardJobStatus
+from app.models.admin_schemas import AdminLoginRequest, OnboardRequest, OnboardAcceptedResponse, OnboardJobStatus
 from app.services import job_store
 from app.services.onboarding_service import (
     run_onboarding_pipeline,
@@ -13,7 +15,7 @@ from app.services.onboarding_service import (
     register_website,
 )
 from app.services.finetune_service import generate_finetune_dataset_task
-from app.config import ADMIN_API_KEY, ALLOWED_WEBSITE_IDS, WEBSITES_CONFIG_PATH, BASE_DIR
+from app.config import ADMIN_API_KEY, ADMIN_PASSWORD, ALLOWED_WEBSITE_IDS, WEBSITES_CONFIG_PATH, BASE_DIR
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -39,16 +41,38 @@ def _safe_upload_filename(filename: str | None) -> str:
 
 
 def _check_admin_key(x_admin_key: str = Header(default="")) -> None:
-    """
-    Minimal shared-secret guard for admin endpoints. If ADMIN_API_KEY
-    isn't set in the environment, admin routes are open — fine for
-    local development, must be set before any real deployment.
-    """
-    if not ADMIN_API_KEY:
-        logger.warning("ADMIN_API_KEY not set — admin endpoints are unprotected")
-        return
-    if x_admin_key.strip() != ADMIN_API_KEY.strip():
-        raise HTTPException(status_code=401, detail="Invalid or missing X-Admin-Key header")
+    """Ensure the server is configured for the session-based admin guard."""
+    if not ADMIN_API_KEY and not ADMIN_PASSWORD:
+        raise HTTPException(status_code=503, detail="Admin authentication is not configured")
+
+
+@router.post("/admin/login")
+async def admin_login(payload: AdminLoginRequest, request: Request):
+    """Validate the server-side admin secret once and issue an HTTP-only session cookie."""
+    if not ADMIN_API_KEY and not ADMIN_PASSWORD:
+        raise HTTPException(status_code=503, detail="Admin authentication is not configured")
+    is_valid = False
+    if ADMIN_PASSWORD and secrets.compare_digest(payload.api_key, ADMIN_PASSWORD):
+        is_valid = True
+    elif ADMIN_API_KEY and secrets.compare_digest(payload.api_key, ADMIN_API_KEY):
+        is_valid = True
+
+    if not is_valid:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    request.session.clear()
+    request.session["is_admin"] = True
+    return {"status": "authenticated"}
+
+
+@router.get("/admin/session")
+async def admin_session(request: Request):
+    return {"authenticated": bool(request.session.get("is_admin"))}
+
+
+@router.post("/admin/logout")
+async def admin_logout(request: Request):
+    request.session.clear()
+    return {"status": "logged_out"}
 
 
 @router.post("/admin/onboard", response_model=OnboardAcceptedResponse, status_code=202)
@@ -240,7 +264,8 @@ async def set_active_website(
     try:
         with open(WEBSITES_CONFIG_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-    except Exception:
+    except Exception as exc:
+        logger.error("Failed to read %s: %s", WEBSITES_CONFIG_PATH, exc)
         data = {"websites": []}
 
     sites = data.get("websites", [])
@@ -248,6 +273,10 @@ async def set_active_website(
         raise HTTPException(status_code=404, detail=f"Unknown website_id '{website_id}'")
 
     data["active_id"] = website_id
+    for site in sites:
+        if site.get("website_id") == website_id:
+            site["active"] = True
+
     with open(WEBSITES_CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 

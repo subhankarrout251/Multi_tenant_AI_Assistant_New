@@ -1,5 +1,6 @@
 import logging
-from fastapi import APIRouter, HTTPException
+import secrets
+from fastapi import APIRouter, HTTPException, Request
 from app.models.schemas import (
     ChatRequest,
     ChatResponse,
@@ -16,8 +17,22 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+def _owned_session_id(request: Request) -> str:
+    """Return the chat ID bound to this signed browser session, creating one if needed."""
+    session_id = request.session.get("chat_session_id")
+    if not isinstance(session_id, str) or not session_id:
+        session_id = f"sess-{secrets.token_urlsafe(24)}"
+        request.session["chat_session_id"] = session_id
+    return session_id
+
+
+def _require_session_owner(request: Request, session_id: str) -> None:
+    if not secrets.compare_digest(_owned_session_id(request), session_id):
+        raise HTTPException(status_code=403, detail="This chat session is not owned by the current browser session")
+
+
 @router.post("/chat", response_model=ChatResponse, summary="Send a message to the chatbot")
-async def chat(request: ChatRequest) -> ChatResponse:
+async def chat(request: ChatRequest, http_request: Request) -> ChatResponse:
     """
     Main chat endpoint.
 
@@ -33,18 +48,20 @@ async def chat(request: ChatRequest) -> ChatResponse:
                    f"Allowed: {allowed_ids}"
         )
 
+    session_id = _owned_session_id(http_request)
     result = await handle_message(
         message=request.message,
         website_id=request.website_id,
-        session_id=request.session_id,
+        session_id=session_id,
     )
 
-    return ChatResponse(reply=result["reply"], sources=result["sources"])
+    return ChatResponse(reply=result["reply"], sources=result["sources"], session_id=session_id)
 
 
 @router.get("/chat/history/{session_id}", response_model=ChatHistoryResponse, summary="Get conversation history")
-async def get_chat_history(session_id: str) -> ChatHistoryResponse:
+async def get_chat_history(session_id: str, request: Request) -> ChatHistoryResponse:
     """Returns the message history for a given session."""
+    _require_session_owner(request, session_id)
     messages = get_history(session_id)
     return ChatHistoryResponse(
         session_id=session_id,
@@ -60,15 +77,17 @@ async def get_chat_history(session_id: str) -> ChatHistoryResponse:
 
 
 @router.post("/chat/clear", response_model=ClearHistoryResponse, summary="Clear conversation memory")
-async def clear_chat(request: ClearHistoryRequest) -> ClearHistoryResponse:
+async def clear_chat(request: ClearHistoryRequest, http_request: Request) -> ClearHistoryResponse:
     """Clears conversation memory for the provided session_id."""
+    _require_session_owner(http_request, request.session_id)
     clear_session_memory(request.session_id)
     return ClearHistoryResponse(status="cleared", session_id=request.session_id)
 
 
 @router.delete("/chat/history/{session_id}", response_model=ClearHistoryResponse, summary="Delete conversation memory")
-async def delete_chat_history(session_id: str) -> ClearHistoryResponse:
+async def delete_chat_history(session_id: str, request: Request) -> ClearHistoryResponse:
     """Deletes conversation memory for the provided session_id."""
+    _require_session_owner(request, session_id)
     clear_session_memory(session_id)
     return ClearHistoryResponse(status="cleared", session_id=session_id)
 

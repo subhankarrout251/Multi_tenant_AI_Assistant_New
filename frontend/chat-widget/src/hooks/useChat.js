@@ -108,6 +108,12 @@ export function useChat(clientInfo = null) {
 
     try {
       const data = await sendMessage(trimmed, sessionId.current);
+      if (data.session_id) {
+        sessionId.current = data.session_id;
+        try {
+          sessionStorage.setItem(SESSION_STORAGE_KEY_ID, data.session_id);
+        } catch {}
+      }
       setMessages((prev) => [
         ...prev,
         { id: uid(), role: "bot", text: data.reply },

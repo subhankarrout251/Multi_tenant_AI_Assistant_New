@@ -49,18 +49,36 @@ def assert_public_url(url: str) -> None:
     loopback, or link-local address so this can't be used to probe
     internal infrastructure.
     """
-    host = urlparse(url).hostname
-    if not host:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         raise UnsafeURLError(f"Could not parse hostname from {url}")
 
     try:
-        resolved_ip = socket.gethostbyname(host)
+        addresses = {item[4][0] for item in socket.getaddrinfo(parsed.hostname, None, type=socket.SOCK_STREAM)}
     except socket.gaierror as e:
-        raise UnsafeURLError(f"Could not resolve host {host}: {e}") from e
+        raise UnsafeURLError(f"Could not resolve host {parsed.hostname}: {e}") from e
 
-    ip = ipaddress.ip_address(resolved_ip)
-    if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
-        raise UnsafeURLError(f"Refusing to crawl private/internal address: {host} → {ip}")
+    for address in addresses:
+        ip = ipaddress.ip_address(address)
+        if any((ip.is_private, ip.is_loopback, ip.is_link_local, ip.is_reserved, ip.is_multicast, ip.is_unspecified)):
+            raise UnsafeURLError(f"Refusing to crawl private/internal address: {parsed.hostname} → {ip}")
+
+
+def _safe_get(url: str, allowed_domain: str | None = None) -> requests.Response:
+    """Fetch only public HTTP(S) URLs, checking every redirect target."""
+    current_url = url
+    for _ in range(6):
+        assert_public_url(current_url)
+        if allowed_domain and urlparse(current_url).netloc != allowed_domain:
+            raise UnsafeURLError(f"Refusing cross-domain URL: {current_url}")
+        response = requests.get(current_url, headers=HEADERS, timeout=10, allow_redirects=False)
+        if not response.is_redirect:
+            return response
+        location = response.headers.get("location")
+        if not location:
+            return response
+        current_url = urljoin(current_url, location)
+    raise UnsafeURLError("Too many redirects while crawling")
 
 
 def infer_page_type(url: str) -> str:
@@ -88,7 +106,7 @@ def _try_sitemap(base_url: str, max_pages: int) -> list[str]:
     """Attempt to read sitemap.xml (and one level of nested sitemaps)."""
     sitemap_url = urljoin(base_url, "/sitemap.xml")
     try:
-        resp = requests.get(sitemap_url, headers=HEADERS, timeout=10)
+        resp = _safe_get(sitemap_url, urlparse(base_url).netloc)
         resp.raise_for_status()
     except requests.RequestException:
         return []
@@ -100,13 +118,13 @@ def _try_sitemap(base_url: str, max_pages: int) -> list[str]:
         nested_urls = []
         for nested_sitemap in urls[:5]:
             try:
-                nested_resp = requests.get(nested_sitemap, headers=HEADERS, timeout=10)
+                nested_resp = _safe_get(nested_sitemap, urlparse(base_url).netloc)
                 nested_resp.raise_for_status()
                 nested_soup = BeautifulSoup(nested_resp.text, "xml")
                 nested_urls.extend(
                     loc.get_text(strip=True) for loc in nested_soup.find_all("loc")
                 )
-            except requests.RequestException:
+            except (requests.RequestException, UnsafeURLError):
                 continue
             if len(nested_urls) >= max_pages:
                 break
@@ -125,9 +143,9 @@ def _crawl_from_homepage(base_url: str, max_pages: int) -> list[str]:
     while queue and len(discovered) < max_pages:
         url = queue.pop(0)
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=10)
+            resp = _safe_get(url, domain)
             resp.raise_for_status()
-        except requests.RequestException:
+        except (requests.RequestException, UnsafeURLError):
             continue
 
         discovered.append(url)
@@ -154,6 +172,8 @@ def discover_pages(base_url: str, max_pages: int = 40) -> list[dict]:
     assert_public_url(base_url)
 
     urls = _try_sitemap(base_url, max_pages)
+    domain = urlparse(base_url).netloc
+    urls = [url for url in urls if urlparse(url).netloc == domain and _is_safe_discovered_url(url)]
     source = "sitemap"
 
     if not urls:
@@ -163,3 +183,12 @@ def discover_pages(base_url: str, max_pages: int = 40) -> list[dict]:
     logger.info("Discovered %d pages for %s via %s", len(urls), base_url, source)
 
     return [{"url": u, "page_type": infer_page_type(u)} for u in urls]
+
+
+def _is_safe_discovered_url(url: str) -> bool:
+    try:
+        assert_public_url(url)
+        return True
+    except UnsafeURLError:
+        logger.warning("Ignoring unsafe URL discovered in sitemap: %s", url)
+        return False

@@ -1,9 +1,10 @@
 import os
 import json
 import logging
+import secrets
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 logger = logging.getLogger(__name__)
 
 # ── App ───────────────────────────────────────────────────────────────
@@ -144,6 +145,11 @@ RAG_CONFIDENCE_LOW:  float = 0.35
 # Between the two → use RAG context but let the LLM supplement
 # with general knowledge if needed (handled via prompt instructions)
 
+# ── Self-RAG reflection ───────────────────────────────────────────────
+# Uses two lightweight LLM checks for retrieved company context: one before
+# generation (relevance) and one after generation (claim grounding).
+SELF_RAG_ENABLED: bool = os.getenv("SELF_RAG_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+
 # ── Groq LLM ──────────────────────────────────────────────────────────
 GROQ_API_KEY: str      = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL: str        = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
@@ -157,3 +163,11 @@ CHUNK_OVERLAP: int = 80
 # ── Onboarding automation ─────────────────────────────────────────────
 ONBOARD_MAX_PAGES: int = int(os.getenv("ONBOARD_MAX_PAGES", "40"))
 ADMIN_API_KEY:      str = os.getenv("ADMIN_API_KEY", "").strip()
+ADMIN_PASSWORD:     str = os.getenv("PASSWORD", "").strip()
+SESSION_SECRET: str = os.getenv("SESSION_SECRET", "").strip()
+
+if not SESSION_SECRET:
+    if APP_ENV == "production":
+        raise RuntimeError("SESSION_SECRET must be configured in production")
+    SESSION_SECRET = secrets.token_urlsafe(32)
+    logger.warning("SESSION_SECRET is not configured; development sessions reset when the API restarts")
